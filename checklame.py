@@ -33,7 +33,7 @@ def is_lame(domain_name, nserver_name):
     out = {'domain': domain_name, 'nserver': nserver_name}
 
     # lookup the nserver's IP address(es)
-    ctx = getdns.Context()
+    ctx = getdns.Context(set_from_os=1)
     ctx.timeout = TIMEOUT_MS
 
     try:
@@ -67,6 +67,10 @@ def is_lame(domain_name, nserver_name):
         print json.dumps({'error': 'WTF!'})
         sys.exit(1)
 
+    if DEBUG_ON:
+        debug_out = {'DEBUG': {'nserver': upstream_ns}}
+        print json.dumps(debug_out)
+
     # lookup the domain's SOA...
     ctx = getdns.Context(set_from_os=0)
     ctx.resolution_type = getdns.RESOLUTION_STUB
@@ -94,8 +98,9 @@ def is_lame(domain_name, nserver_name):
             return out
         # deal with other repsonse codes here...
 
-    # if nothing was successful, then lame
-    out['status'] = 'LAME'
+    # if nothing was successful, then not lame
+    # but also not not-lame...
+    out['status'] = 'UNKNOWN'
     out['detail'] = 'TBD'
     return out
 
