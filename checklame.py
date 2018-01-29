@@ -9,33 +9,37 @@ import getdns
 
 DEBUG_ON = True
 IPV6_YES = True
+TIMEOUT_MS = 5000
 
 def main():
     """main function"""
     if len(sys.argv) != 3:
-        print "Usage: {0} domain.arpa nserver".format(sys.argv[0])
+        usage_out = {'Usage': '{0} domain.arpa nserver'.format(sys.argv[0])}
+        print json.dumps(usage_out)
         sys.exit(1)
 
     # add check(s) here to make sure domain and nserver
     # args are the right sort of strings for what they should be
-    # also need to deal with trailing ".", which currently breaks
+    # also need to deal with trailing '.', which currently breaks
 
     result = is_lame(sys.argv[1], sys.argv[2])
-    print result
+    print json.dumps(result)
 
 
 def is_lame(domain_name, nserver_name):
     """lameness check function"""
 
+    # prep base outut
     out = {'domain': domain_name, 'nserver': nserver_name}
 
     # lookup the nserver's IP address(es)
     ctx = getdns.Context()
+    ctx.timeout = TIMEOUT_MS
 
     try:
         nserver_ips = ctx.address(name=nserver_name)
     except getdns.error, err:
-        print str(err)
+        print json.dumps({'error': str(err)})
         sys.exit(1)
 
     if nserver_ips.status == getdns.RESPSTATUS_GOOD:
@@ -46,22 +50,21 @@ def is_lame(domain_name, nserver_name):
             answers = nserver_ips.just_address_answers
             upstream_ns = [ip for ip in answers if ip.get('address_type', '') != 'IPv6']
         else:
-            print "WTF!"
+            print json.dumps({'error': 'WTF!'})
             sys.exit(1)
 
     elif nserver_ips.status == getdns.RESPSTATUS_NO_NAME:
         out['status'] = 'LAME'
         out['detail'] = 'cannot resolve nserver name (negative response)'
-        return json.dumps(out)
+        return out
 
     elif nserver_ips.status == getdns.RESPSTATUS_ALL_TIMEOUT:
         out['status'] = 'LAME'
         out['detail'] = 'cannot resolve nserver name (negative response)'
-        return json.dumps(out)
+        return out
 
     else:
-        print "OOPS!: Lookup failure for {0}. (Error code: {1})."\
-                .format(nserver_name, nserver_ips.status)
+        print json.dumps({'error': 'WTF!'})
         sys.exit(1)
 
     # lookup the domain's SOA...
@@ -79,7 +82,7 @@ def is_lame(domain_name, nserver_name):
         try:
             results = ctx.general(name=domain_name, request_type=getdns.RRTYPE_SOA)
         except getdns.error, err:
-            print str(err)
+            print json.dumps({'error': str(err)})
             sys.exit(1)
 
         # and check for the AA bit set
@@ -88,13 +91,13 @@ def is_lame(domain_name, nserver_name):
             # one success is enough
             out['status'] = 'OK'
             out['detail'] = 'aa'
-            return json.dumps(out)
+            return out
         # deal with other repsonse codes here...
 
     # if nothing was successful, then lame
     out['status'] = 'LAME'
-    out['detail'] = ''
-    return json.dumps(out)
+    out['detail'] = 'TBD'
+    return out
 
 
 if __name__ == "__main__":
