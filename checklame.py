@@ -4,8 +4,9 @@
 # [ under construction ]
 
 import sys
-import pprint
+#import pprint
 import json
+#import argparse
 import getdns
 
 DEBUG_ON = False
@@ -17,7 +18,7 @@ if IPV6_YES:
 
 def main():
     """main function"""
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         usage_out = {'Usage': '{0} domain.arpa nserver'.format(sys.argv[0])}
         print json.dumps(usage_out)
         sys.exit(1)
