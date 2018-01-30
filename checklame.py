@@ -4,12 +4,16 @@
 # [ under construction ]
 
 import sys
+import pprint
 import json
 import getdns
 
-DEBUG_ON = True
+DEBUG_ON = False
 IPV6_YES = True
-TIMEOUT_MS = 5000
+TIMEOUT_MS = 3000
+SEED_RECURSORS = [{'address_data': '9.9.9.10', 'address_type': 'IPv4'}]
+if IPV6_YES:
+    SEED_RECURSORS.append({'address_data': '2620:fe::10', 'address_type': 'IPv6'})
 
 def main():
     """main function"""
@@ -33,7 +37,8 @@ def is_lame(domain_name, nserver_name):
     out = {'domain': domain_name, 'nserver': nserver_name}
 
     # lookup the nserver's IP address(es)
-    ctx = getdns.Context(set_from_os=1)
+    ctx = getdns.Context()
+    ctx.upstream_recursive_servers = SEED_RECURSORS
     ctx.timeout = TIMEOUT_MS
 
     try:
@@ -60,7 +65,7 @@ def is_lame(domain_name, nserver_name):
 
     elif nserver_ips.status == getdns.RESPSTATUS_ALL_TIMEOUT:
         out['status'] = 'LAME'
-        out['detail'] = 'cannot resolve nserver name (negative response)'
+        out['detail'] = 'cannot resolve nserver name (query timeout)'
         return out
 
     else:
@@ -90,18 +95,32 @@ def is_lame(domain_name, nserver_name):
             sys.exit(1)
 
         # and check for the AA bit set
-        if results.status == getdns.RESPSTATUS_GOOD and \
-                                results.replies_tree[0]['header']['aa'] == 1:
-            # one success is enough
-            out['status'] = 'OK'
-            out['detail'] = 'aa'
+        if results.status == getdns.RESPSTATUS_GOOD:
+            if results.replies_tree[0]['answer'] and results.replies_tree[0]['header']['aa'] == 1:
+                # one success is enough
+                out['status'] = 'OK'
+                out['detail'] = results.replies_tree[0]['answer'][0]['rdata']['serial']
+                return out
+            else:
+                out['status'] = 'LAME'
+                out['detail'] = 'no matching authoritative response'
+                return out
+        elif results.status == getdns.RESPSTATUS_NO_NAME:
+            out['status'] = 'LAME'
+            out['detail'] = 'negative response for domain SOA'
             return out
-        # deal with other repsonse codes here...
+        elif results.status == getdns.RESPSTATUS_ALL_TIMEOUT:
+            out['status'] = 'LAME'
+            out['detail'] = 'query timeout for domain SOA'
+            return out
+        else:
+            print json.dumps({'error': 'WTF!'})
+            sys.exit(1)
 
-    # if nothing was successful, then not lame
-    # but also not not-lame...
+    # shouldn't reach here, but if we do,
+    # then we can't (necessarily) flag as lame
     out['status'] = 'UNKNOWN'
-    out['detail'] = 'TBD'
+    out['detail'] = 'glitch in the matrix'
     return out
 
 
