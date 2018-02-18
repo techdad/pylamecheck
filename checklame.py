@@ -10,7 +10,7 @@ import json
 import getdns
 
 DEBUG_ON = False
-IPV6_YES = True
+IPV6_YES = False
 TIMEOUT_MS = 3000
 SEED_RECURSORS = [{'address_data': '9.9.9.10', 'address_type': 'IPv4'}]
 if IPV6_YES:
@@ -39,14 +39,13 @@ def is_lame(domain_name, nserver_name):
 
     # lookup the nserver's IP address(es)
     ctx = getdns.Context()
-    ctx.upstream_recursive_servers = SEED_RECURSORS
+    #ctx.upstream_recursive_servers = SEED_RECURSORS
     ctx.timeout = TIMEOUT_MS
 
     try:
         nserver_ips = ctx.address(name=nserver_name)
     except getdns.error, err:
-        print json.dumps({'error': str(err)})
-        sys.exit(1)
+        return {'error': str(err)}
 
     if nserver_ips.status == getdns.RESPSTATUS_GOOD:
         # remove AAAA responses if IPv6 flag is off
@@ -56,8 +55,7 @@ def is_lame(domain_name, nserver_name):
             answers = nserver_ips.just_address_answers
             upstream_ns = [ip for ip in answers if ip.get('address_type', '') != 'IPv6']
         else:
-            print json.dumps({'error': 'WTF!'})
-            sys.exit(1)
+            return{'error': 'WTF!'}
 
     elif nserver_ips.status == getdns.RESPSTATUS_NO_NAME:
         out['status'] = 'LAME'
@@ -70,8 +68,7 @@ def is_lame(domain_name, nserver_name):
         return out
 
     else:
-        print json.dumps({'error': 'WTF!'})
-        sys.exit(1)
+        return {'error': 'WTF!'}
 
     if DEBUG_ON:
         debug_out = {'DEBUG': {'nserver': upstream_ns}}
@@ -92,8 +89,7 @@ def is_lame(domain_name, nserver_name):
         try:
             results = ctx.general(name=domain_name, request_type=getdns.RRTYPE_SOA)
         except getdns.error, err:
-            print json.dumps({'error': str(err)})
-            sys.exit(1)
+            return {'error': str(err)}
 
         # and check for the AA bit set
         if results.status == getdns.RESPSTATUS_GOOD:
@@ -115,8 +111,7 @@ def is_lame(domain_name, nserver_name):
             out['detail'] = 'query timeout for domain SOA'
             return out
         else:
-            print json.dumps({'error': 'WTF!'})
-            sys.exit(1)
+            return {'error': 'WTF!'}
 
     # shouldn't reach here, but if we do,
     # then we can't (necessarily) flag as lame
