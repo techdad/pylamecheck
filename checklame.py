@@ -20,7 +20,7 @@ def main():
     """main function"""
     if len(sys.argv) < 3:
         usage_out = {'Usage': '{0} domain.arpa nserver'.format(sys.argv[0])}
-        print json.dumps(usage_out)
+        print(json.dumps(usage_out))
         sys.exit(1)
 
     # add check(s) here to make sure domain and nserver
@@ -28,7 +28,7 @@ def main():
     # also need to deal with trailing '.', which currently breaks
 
     result = is_lame(sys.argv[1], sys.argv[2])
-    print json.dumps(result)
+    print(json.dumps(result))
 
 
 def is_lame(domain_name, nserver_name):
@@ -39,12 +39,14 @@ def is_lame(domain_name, nserver_name):
 
     # lookup the nserver's IP address(es)
     ctx = getdns.Context()
-    #ctx.upstream_recursive_servers = SEED_RECURSORS
+    ctx.resolution_type = getdns.RESOLUTION_STUB        # query caching resolver(s) directly, don't waste time
+                                                        # looking up root-servers, and on from there
+    ctx.upstream_recursive_servers = SEED_RECURSORS     # optional - seed from OS (resolv.conf otherwise)
     ctx.timeout = TIMEOUT_MS
 
     try:
         nserver_ips = ctx.address(name=nserver_name)
-    except getdns.error, err:
+    except getdns.error as err:
         return {'error': str(err)}
 
     if nserver_ips.status == getdns.RESPSTATUS_GOOD:
@@ -72,23 +74,23 @@ def is_lame(domain_name, nserver_name):
 
     if DEBUG_ON:
         debug_out = {'DEBUG': {'nserver': upstream_ns}}
-        print json.dumps(debug_out)
+        print(json.dumps(debug_out))
 
     # lookup the domain's SOA...
-    ctx = getdns.Context(set_from_os=0)
-    ctx.resolution_type = getdns.RESOLUTION_STUB
+    ctx = getdns.Context(set_from_os=0)             # we never want to use caching resolvers
+    ctx.resolution_type = getdns.RESOLUTION_STUB    # nor query any root-servers here either
 
     # ... trying each IP obtained above, in turn
     for ns_ip in upstream_ns:
 
         if DEBUG_ON:
             debug_out = {'DEBUG': {'query': ns_ip}}
-            print json.dumps(debug_out)
+            print(json.dumps(debug_out))
 
         ctx.upstream_recursive_servers = [ns_ip]
         try:
             results = ctx.general(name=domain_name, request_type=getdns.RRTYPE_SOA)
-        except getdns.error, err:
+        except getdns.error as err:
             return {'error': str(err)}
 
         # and check for the AA bit set
