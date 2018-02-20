@@ -2,3 +2,4 @@ getdns
 flask
 flask_restplus
 gunicorn
+functools32
