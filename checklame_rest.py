@@ -41,7 +41,7 @@ def is_lame(domain_name, nserver_name):
     ctx = getdns.Context()
     ctx.resolution_type = getdns.RESOLUTION_STUB    # query caching resolver(s) directly
                                                     # don't waste time on full recursion
-    ctx.upstream_recursive_servers = SEED_RECURSORS # optional, else get from OS (resolv.conf)
+    #ctx.upstream_recursive_servers = SEED_RECURSORS # optional, else get from OS (resolv.conf)
     ctx.timeout = TIMEOUT_MS
 
     try:

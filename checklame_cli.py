@@ -10,7 +10,7 @@ import getdns
 # constants to set some stuff
 # (maybe move to config file in future)
 DEBUG_ON = False
-IPV6_YES = False
+IPV6_YES = True
 TIMEOUT_MS = 3000
 SEED_RECURSORS = [{'address_data': '9.9.9.10', 'address_type': 'IPv4'}]
 if IPV6_YES:
@@ -42,7 +42,7 @@ def is_lame(domain_name, nserver_name):
     ctx = getdns.Context()
     ctx.resolution_type = getdns.RESOLUTION_STUB    # query caching resolver(s) directly
                                                     # don't waste time on full recursion
-    ctx.upstream_recursive_servers = SEED_RECURSORS # optional, else get from OS (resolv.conf)
+    #ctx.upstream_recursive_servers = SEED_RECURSORS # optional, else get from OS (resolv.conf)
     ctx.timeout = TIMEOUT_MS
 
     try:
