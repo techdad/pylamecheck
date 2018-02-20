@@ -6,7 +6,6 @@ RESTful API version
 # Daniel Shaw <daniel@afrinic.net>
 # [ under construction ]
 
-import json
 import getdns
 from flask import Flask
 from flask_restplus import Resource, Api
