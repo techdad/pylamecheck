@@ -4,17 +4,18 @@
 # [ under construction ]
 
 import sys
-#import pprint
 import json
-#import argparse
 import getdns
 
+# constants to set some stuff
+# (maybe move to config file in future)
 DEBUG_ON = False
 IPV6_YES = False
 TIMEOUT_MS = 3000
 SEED_RECURSORS = [{'address_data': '9.9.9.10', 'address_type': 'IPv4'}]
 if IPV6_YES:
     SEED_RECURSORS.append({'address_data': '2620:fe::10', 'address_type': 'IPv6'})
+
 
 def main():
     """main function"""
@@ -39,9 +40,9 @@ def is_lame(domain_name, nserver_name):
 
     # lookup the nserver's IP address(es)
     ctx = getdns.Context()
-    ctx.resolution_type = getdns.RESOLUTION_STUB        # query caching resolver(s) directly, don't waste time
-                                                        # looking up root-servers, and on from there
-    ctx.upstream_recursive_servers = SEED_RECURSORS     # optional - seed from OS (resolv.conf otherwise)
+    ctx.resolution_type = getdns.RESOLUTION_STUB    # query caching resolver(s) directly
+                                                    # don't waste time on full recursion
+    ctx.upstream_recursive_servers = SEED_RECURSORS # optional, else get from OS (resolv.conf)
     ctx.timeout = TIMEOUT_MS
 
     try:
