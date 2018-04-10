@@ -2,7 +2,7 @@
 
 Some code to check nameserver(s) for domain (zone) "lameness".
 
-Very much a work in progress.
+Still somewhat a work in progress.
 
 ## Installation
 
@@ -12,6 +12,8 @@ Very much a work in progress.
 2. Clone this git repo, and run the `setup.sh`, which initialises a python virtual environment and installs python requirements.
 
 #### Detailed steps:
+
+(Example is for CentOS/RHEL/Fedora/etc. - replace with package manager of choice as desired)
 
 ```
 yum install getdns openssl
